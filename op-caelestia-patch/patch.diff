@@ -173,6 +173,26 @@ index 1413c809..2843f84e 100644
  };
  
  } // namespace caelestia::config
+diff --git a/plugin/src/Caelestia/Services/lyrics.cpp b/plugin/src/Caelestia/Services/lyrics.cpp
+index 00664b56..c28302b2 100644
+--- a/plugin/src/Caelestia/Services/lyrics.cpp
++++ b/plugin/src/Caelestia/Services/lyrics.cpp
+@@ -345,6 +345,7 @@ void Lyrics::cancelInFlight() {
+     for (auto it = m_pendingReplies.begin(); it != m_pendingReplies.end(); ++it) {
+         for (auto& ptr : it.value()) {
+             if (auto* reply = ptr.data()) {
++                reply->disconnect(this);
+                 reply->abort();
+                 reply->deleteLater();
+             }
+@@ -768,6 +769,7 @@ void Lyrics::fetchNetEaseLyricsById(const QString& id, int reqId) {
+ QNetworkReply* Lyrics::getJson(const QUrl& url, const QHash<QByteArray, QByteArray>& headers) {
+     QNetworkRequest req(url);
+     req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
++    req.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+     req.setRawHeader("Cache-Control"_ba, "no-cache, no-store"_ba);
+     req.setRawHeader("Pragma"_ba, "no-cache"_ba);
+     req.setRawHeader("Connection"_ba, "close"_ba);
 diff --git a/plugin/src/Caelestia/cutils.cpp b/plugin/src/Caelestia/cutils.cpp
 index 42d7570f..d7a5f788 100644
 --- a/plugin/src/Caelestia/cutils.cpp
@@ -213,6 +233,18 @@ index 42d7570f..d7a5f788 100644
  namespace caelestia {
  
  void CUtils::saveItem(QQuickItem* target, const QUrl& path) {
+diff --git a/plugin/src/Caelestia/requests.cpp b/plugin/src/Caelestia/requests.cpp
+index 92ca2aab..c7fa373a 100644
+--- a/plugin/src/Caelestia/requests.cpp
++++ b/plugin/src/Caelestia/requests.cpp
+@@ -42,6 +42,7 @@ void Requests::get(const QUrl& url, QJSValue onSuccess, QJSValue onError, QJSVal
+     QNetworkRequest request(url);
+     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
+     request.setAttribute(QNetworkRequest::CookieSaveControlAttribute, QNetworkRequest::Manual);
++    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+     request.setRawHeader("Cache-Control", "no-cache, no-store");
+     request.setRawHeader("Pragma", "no-cache");
+     request.setRawHeader("Connection", "close");
 diff --git a/scripts/startup-shell.sh b/scripts/startup-shell.sh
 index 7bafbfd4..8ce7e600 100755
 --- a/scripts/startup-shell.sh
