@@ -127,6 +127,46 @@ translations = {
         ("Failed to save config%1", "Не удалось сохранить настройки%1"),
         ("Unknown option in%1 config", "Неизвестная опция в конфиге%1"),
     ],
+    # AI Assistant & Ollama
+    "Content": [
+        ("Dashboard", "Главная"),
+        ("Media", "Медиа"),
+        ("Performance", "Мониторинг"),
+        ("Weather", "Погода"),
+        ("Assistant", "ИИ-Ассистент"),
+        ("No models", "Нет моделей"),
+        ("Ask me anything", "Спросите меня о чем угодно…"),
+        ("Waiting for Ollama…", "Ожидание службы Ollama…"),
+        ("Reasoning…", "Рассуждаю…"),
+        ("Settings", "Параметры модели"),
+        ("Context length: %1 tokens", "Длина контекста: %1 токенов"),
+        ("Temperature: %1", "Температура: %1"),
+        ("No chats yet", "История диалогов пуста"),
+        ("New chat", "Новый диалог"),
+        ("Message %1…", "Сообщение для %1…"),
+    ],
+    "Wrapper": [
+        ("Attach an image", "Прикрепить изображение"),
+        ("Image files", "Изображения"),
+    ],
+    "Ollama": [
+        ("New chat", "Новый диалог"),
+        ("Could not reach Ollama at %1", "Не удалось подключиться к Ollama на %1"),
+    ],
+    # Display Settings
+    "DisplayPage": [
+        ("Display", "Экран"),
+    ],
+    "MonitorSection": [
+        (" (disabled)", " (выключен)"),
+        ("Enabled", "Включен"),
+        ("Output active", "Вывод изображения активен"),
+        ("Auto-disable when external connected", "Автоотключение при подключении внешнего"),
+        ("Turns this screen off while an external is plugged in, back on when unplugged", "Отключает экран ноутбука при подключении внешнего монитора"),
+        ("Resolution & refresh rate", "Разрешение и частота обновления"),
+        ("Scale", "Масштабирование"),
+        ("Display scaling factor", "Масштаб интерфейса на этом мониторе"),
+    ],
     # Generic empty context for fallback
     "": [
         ("Enabled", "Включено"),

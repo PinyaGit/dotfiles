@@ -1,3 +1,98 @@
+diff --git a/components/ScreenState.qml b/components/ScreenState.qml
+index 708cad92..ccc291c1 100644
+--- a/components/ScreenState.qml
++++ b/components/ScreenState.qml
+@@ -13,11 +13,23 @@ PersistentProperties {
+     property bool sidebar
+     property bool dock
+     property bool overview
++    property bool ai
+ 
+     property var launcherPickCallback: undefined
+ 
+     onLauncherChanged: {
+-        if (launcher) dock = false;
++        if (launcher) {
++            dock = false;
++            ai = false;
++        }
++    }
++
++    onAiChanged: {
++        if (ai) {
++            launcher = false;
++            dashboard = false;
++            sidebar = false;
++        }
+     }
+ 
+     // Dashboard state
+diff --git a/modules/Shortcuts.qml b/modules/Shortcuts.qml
+index 76738447..d1c26e77 100644
+--- a/modules/Shortcuts.qml
++++ b/modules/Shortcuts.qml
+@@ -121,10 +121,23 @@ Scope {
+         }
+     }
+ 
++    // qmllint disable unresolved-type
++    CustomShortcut {
++        // qmllint enable unresolved-type
++        name: "ai"
++        description: "Toggle AI assistant"
++        onPressed: {
++            if (root.hasFullscreen)
++                return;
++            const screenState = ShellState.forActive();
++            screenState.ai = !screenState.ai;
++        }
++    }
++
+     IpcHandler {
+         function toggle(drawer: string): void {
+             if (list().split("\n").includes(drawer)) {
+-                if (root.hasFullscreen && ["launcher", "session", "dashboard"].includes(drawer))
++                if (root.hasFullscreen && ["launcher", "session", "dashboard", "ai"].includes(drawer))
+                     return;
+                 const screenState = ShellState.forActive();
+                 screenState[drawer] = !screenState[drawer];
+diff --git a/modules/drawers/Panels.qml b/modules/drawers/Panels.qml
+index bebcab92..37f9cb20 100644
+--- a/modules/drawers/Panels.qml
++++ b/modules/drawers/Panels.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import Quickshell
+ import Caelestia.Config
+ import qs.components
++import qs.modules.ai as Ai
+ import qs.modules.bar as Bar
+ import qs.modules.dashboard as Dashboard
+ import qs.modules.launcher as Launcher
+@@ -30,6 +31,7 @@ Item {
+     readonly property alias launcher: launcher
+     readonly property alias dashboard: dashboard
+     readonly property alias dock: dock
++    readonly property alias ai: ai
+     readonly property alias popouts: popoutsWrapper.content
+     readonly property alias popoutsWrapper: popoutsWrapper
+     readonly property alias utilities: utilities
+@@ -129,6 +131,16 @@ Item {
+         anchors.top: parent.top
+     }
+ 
++    Ai.Wrapper {
++        id: ai
++
++        screen: root.screen
++        screenState: root.screenState
++
++        anchors.horizontalCenter: parent.horizontalCenter
++        anchors.bottom: parent.bottom
++    }
++
+     BarPopouts.ClipWrapper {
+         id: popoutsWrapper
+ 
 diff --git a/modules/lock/Fetch.qml b/modules/lock/Fetch.qml
 index 8f8ec6d5..fb0e90c5 100644
 --- a/modules/lock/Fetch.qml
@@ -10,6 +105,49 @@ index 8f8ec6d5..fb0e90c5 100644
          playing: root.visible && root.showGif && width > 0 && height > 0
          paused: false
          speed: 1
+diff --git a/modules/nexus/PageCompRegistry.qml b/modules/nexus/PageCompRegistry.qml
+index 007672f6..d3f5e418 100644
+--- a/modules/nexus/PageCompRegistry.qml
++++ b/modules/nexus/PageCompRegistry.qml
+@@ -46,6 +46,14 @@ QtObject {
+         },
+ 
+         // Connectivity
++        Component {
++            // Display
++            StackPage {
++                Component {
++                    DisplayPage {}
++                }
++            }
++        },
+         Component {
+             // Network
+             StackPage {
+diff --git a/modules/nexus/PageRegistry.qml b/modules/nexus/PageRegistry.qml
+index 8565f6fc..6818aa47 100644
+--- a/modules/nexus/PageRegistry.qml
++++ b/modules/nexus/PageRegistry.qml
+@@ -15,13 +15,12 @@ QtObject {
+         },
+ 
+         // Connectivity
+-        // TODO
+-        // {
+-        //     label: qsTr("Display"),
+-        //     icon: "monitor",
+-        //     description: qsTr("Output configuration"),
+-        //     category: "connectivity"
+-        // },
++        {
++            label: qsTr("Display"),
++            icon: "monitor",
++            description: qsTr("Output configuration"),
++            category: "connectivity"
++        },
+         {
+             label: qsTr("Network"),
+             icon: "wifi",
 diff --git a/modules/session/Content.qml b/modules/session/Content.qml
 index fedf6032..fe193100 100644
 --- a/modules/session/Content.qml

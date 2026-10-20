@@ -113,6 +113,11 @@ if [ -f "$DOTFILES_DIR/op-caelestia-patch/patch.diff" ]; then
 fi
 
 # Копирование тем и переводов
+if [ -d "$DOTFILES_DIR/op-caelestia-patch/extra_files" ]; then
+    info "Развёртывание модулей Ollama AI и Display Settings..."
+    cp -rf "$DOTFILES_DIR/op-caelestia-patch/extra_files/"* "$CAELESTIA_DIR/"
+fi
+
 if [ -d "$DOTFILES_DIR/op-caelestia-patch/assets_Classic" ]; then
     mkdir -p "$CAELESTIA_DIR/assets/themes/Classic"
     cp -rf "$DOTFILES_DIR/op-caelestia-patch/assets_Classic/"* "$CAELESTIA_DIR/assets/themes/Classic/"

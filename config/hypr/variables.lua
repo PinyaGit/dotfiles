@@ -135,6 +135,7 @@ return {
 
     -- Misc
     kbOverview                 = "SUPER + Tab",
+    kbAi                       = "SUPER + A",
     kbLauncher                 = "SUPER + SUPER_L",
     kbSession                  = "CTRL + ALT + Delete",
     kbShowSidebar              = "SUPER + N",

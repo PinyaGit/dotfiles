@@ -27,6 +27,9 @@ hl.on("hyprland.start", function()
 
     -- Start shell (OP-Caelestia; to revert: "caelestia shell -d")
     hl.exec_cmd("op-caelestia")
+
+    -- Re-launch Wallpaper Engine for the saved wallpaper
+    hl.exec_cmd("bash ~/.config/caelestia/we-restore.sh")
 end)
 
 -- Resizer listeners

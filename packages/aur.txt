@@ -1,6 +1,12 @@
 # Gaming
 protonup-qt-bin
 
+# Wallpaper Engine
+linux-wallpaperengine-git
+
+# Music & Discord
+music-discord-rpc-bin
+
 # SDDM & Lock
 caelestia-sddm-locklike-git
 

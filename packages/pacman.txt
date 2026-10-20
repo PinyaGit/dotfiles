@@ -18,6 +18,9 @@ python-gobject
 gtk3
 yad
 
+# AI & Local LLM
+ollama-cuda
+
 # File Manager & Media Preview
 tumbler
 ffmpegthumbnailer
