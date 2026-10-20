@@ -1,0 +1,392 @@
+#!/usr/bin/env python3
+import sys
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+from gi.repository import Gtk, Gdk, GLib
+
+CSS = b"""
+window {
+    background-color: #16161e;
+    color: #c0caf5;
+    font-family: system-ui, sans-serif;
+    border-radius: 16px;
+    border: 1px solid #3b4261;
+}
+
+headerbar {
+    background-color: #1a1b26;
+    border-bottom: 1px solid #292e42;
+    padding: 8px 12px;
+}
+
+stackswitcher button {
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: #7aa2f7;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 6px 14px;
+    margin: 2px 4px;
+    transition: all 0.2s ease;
+}
+
+stackswitcher button:checked {
+    background-color: #7aa2f7;
+    color: #1a1b26;
+}
+
+stackswitcher button:hover:not(:checked) {
+    background-color: #292e42;
+}
+
+search-entry, entry {
+    background-color: #1f2335;
+    color: #c0caf5;
+    border: 1px solid #3b4261;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+search-entry:focus, entry:focus {
+    border-color: #7aa2f7;
+}
+
+list {
+    background-color: transparent;
+}
+
+row {
+    background-color: #1a1b26;
+    border-radius: 10px;
+    margin: 3px 6px;
+    padding: 8px 12px;
+    border: 1px solid #24283b;
+    transition: background-color 0.15s ease;
+}
+
+row:hover {
+    background-color: #24283b;
+    border-color: #414868;
+}
+
+.key-badge {
+    background-color: #292e42;
+    color: #7dcfff;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #3b4261;
+}
+
+.flag-badge {
+    background-color: #1f2335;
+    color: #9ece6a;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #414868;
+}
+
+.copy-btn {
+    background-color: #292e42;
+    color: #bb9af7;
+    border-radius: 8px;
+    padding: 4px 10px;
+    border: 1px solid #3b4261;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.copy-btn:hover {
+    background-color: #7aa2f7;
+    color: #1a1b26;
+}
+
+.section-title {
+    color: #bb9af7;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px 8px 4px 8px;
+}
+
+.subtext {
+    color: #7982a9;
+    font-size: 12px;
+}
+
+scrolledwindow {
+    border: none;
+}
+"""
+
+DATA = {
+    "🎮 Игры и Steam": {
+        "flags": [
+            ("mangohud %command%", "Включить оверлей MangoHud (FPS, температуры, частоты GPU/CPU, график frametime)"),
+            ("gamemoderun %command%", "Режим Feral GameMode (максимальный приоритет CPU, режим производительности)"),
+            ("gamemoderun mangohud %command%", "GameMode + MangoHud вместе (оптимально для большинства игр)"),
+            ("PROTON_ENABLE_NVAPI=1 %command%", "Включить NVIDIA DLSS и Reflex (для видеокарт RTX 40-й серии)"),
+            ("VKD3D_CONFIG=dxr11,dxr PROTON_ENABLE_NVAPI=1 %command%", "Включить Ray Tracing (трассировку лучей DirectX 12) + DLSS"),
+            ("gamescope -W 2560 -H 1440 -f -r 144 -- %command%", "Gamescope: изолированное окно с фиксированным 2K разрешением и 144Hz"),
+            ("gamescope -W 1920 -H 1080 -w 2560 -h 1440 -F fsr -- %command%", "Gamescope + FSR апскейл (рендерит в 1080p, растягивает в 2K с улучшением резкости)"),
+            ("WINE_FULLSCREEN_FSR=1 WINE_FULLSCREEN_FSR_STRENGTH=2 %command%", "Встроенный апскейлер AMD FSR 1.0 в Proton (для игр без нативного DLSS/FSR)"),
+            ("WINEDLLOVERRIDES=\"version=n,b\" %command%", "Загрузка модов/хуков (ReShade, Fluffy Mod Manager, ASI Loader)"),
+            ("DXVK_ASYNC=1 %command%", "Асинхронная компиляция шейдеров в DXVK (устраняет микрофризы)"),
+            ("mangohud gamescope -f -- %command%", "Оверлей MangoHud поверх сессии Gamescope"),
+            ("PROTON_USE_WINED3D=1 %command%", "Запуск старых DirectX 9-11 игр через OpenGL (если игра вылетает на Vulkan)")
+        ],
+        "keys": [
+            ("Right Shift + F12", "Включить / скрыть оверлей MangoHud"),
+            ("Right Shift + F11", "Переключить подробный / компактный режим MangoHud"),
+            ("Super + F", "Полноэкранный режим игры (Fullscreen)"),
+            ("Super + Alt + Пробел", "Переключить игру в плавающее окно (Floating)"),
+            ("Super + Alt + \\", "Режим «Картинка в картинке» (PiP)"),
+            ("Super + Tab", "3D Обзор рабочих столов (свернуть / посмотреть другое окно)")
+        ]
+    },
+    "🪟 Окна и Столы": {
+        "keys": [
+            ("Super + Q", "Закрыть текущее окно"),
+            ("Super + F", "Полноэкранный режим (Fullscreen)"),
+            ("Super + Alt + F", "Полноэкранный режим с сохранением границ"),
+            ("Super + Alt + Пробел", "Плавающий / тайловый режим окна"),
+            ("Super + P", "Закрепить окно поверх всех (Pin on top)"),
+            ("Super + Z", "Режим перемещения окна клавишами"),
+            ("Super + X", "Режим изменения размера окна клавишами"),
+            ("Super + ЛКМ (зажать)", "Перетащить окно мышью в любое место"),
+            ("Super + ПКМ (зажать)", "Изменить размер окна мышью"),
+            ("Super + Стрелки / - / =", "Быстрое изменение размера окна"),
+            ("Super + 1 .. 9", "Переключиться на рабочий стол 1-9"),
+            ("Super + Alt + 1 .. 9", "Перенести окно на рабочий стол 1-9"),
+            ("Super + Колёсико мыши", "Быстрое переключение рабочих столов"),
+            ("Ctrl + Super + ← / →", "Предыдущий / следующий рабочий стол"),
+            ("Super + S", "Специальный рабочий стол (Scratchpad)"),
+            ("Super + Alt + S", "Спрятать окно в Scratchpad")
+        ]
+    },
+    "✨ Caelestia Shell": {
+        "keys": [
+            ("Super (нажатие)", "Главное меню приложений (Launcher)"),
+            ("Super + Tab", "3D Taskview / Обзор рабочих столов (Overview)"),
+            ("Super + N", "Боковая панель Nexus (уведомления, плеер, погода)"),
+            ("Super + K", "Панель быстрых переключателей"),
+            ("Ctrl + Super + Alt + R", "Быстрый перезапуск Caelestia Shell"),
+            ("Ctrl + Alt + Delete", "Меню сессии (выключение, перезагрузка, сон)"),
+            ("Super + L", "Экран блокировки (Lockscreen)"),
+            ("Super + V", "История буфера обмена (Cliphist)"),
+            ("Super + .", "Выбор смайликов и эмодзи (Emoji Picker)")
+        ]
+    },
+    "📱 Приложения и Утилиты": {
+        "keys": [
+            ("Super + T", "Терминал (Foot)"),
+            ("Super + E", "Файловый менеджер (Thunar)"),
+            ("Super + W", "Веб-браузер (Brave / Firefox)"),
+            ("Super + C", "Редактор кода (Zed / Codium)"),
+            ("Ctrl + Shift + Esc", "Системный монитор / диспетчер процессов"),
+            ("Print", "Снимок всего экрана"),
+            ("Super + Shift + S", "Снимок выделенной области экрана (с заморозкой)"),
+            ("Super + Alt + Shift + S", "Снимок выделенной области экрана"),
+            ("Ctrl + Alt + R", "Запись экрана (видео)"),
+            ("Super + Shift + C", "Пипетка цвета (Color Picker)")
+        ]
+    },
+    "🎵 Медиа и Звук": {
+        "keys": [
+            ("Ctrl + Super + Пробел", "Воспроизведение / Пауза текущего трека"),
+            ("Ctrl + Super + =", "Следующий трек"),
+            ("Ctrl + Super + -", "Предыдущий трек"),
+            ("Ctrl + Super + Backspace", "Остановить воспроизведение"),
+            ("Ctrl + Alt + V", "Панель регулировки громкости и аудиоустройств"),
+            ("Super + Shift + M", "Быстро заглушить звук (Mute)")
+        ]
+    }
+}
+
+
+class CheatsheetWindow(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="Шпаргалка Hyprland, Caelestia и Игры")
+        self.set_default_size(860, 640)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.connect("key-press-event", self.on_key_press)
+        self.connect("destroy", Gtk.main_quit)
+
+        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+
+        # Main Layout
+        main_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        main_vbox.set_margin_top(12)
+        main_vbox.set_margin_bottom(12)
+        main_vbox.set_margin_start(16)
+        main_vbox.set_margin_end(16)
+        self.add(main_vbox)
+
+        # Header with StackSwitcher & Search
+        top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        main_vbox.pack_start(top_bar, False, False, 0)
+
+        self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        self.stack.set_transition_duration(180)
+
+        switcher = Gtk.StackSwitcher()
+        switcher.set_stack(self.stack)
+        top_bar.pack_start(switcher, True, True, 0)
+
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("Поиск... (Ctrl+F)")
+        self.search_entry.set_width_chars(20)
+        self.search_entry.connect("search-changed", self.on_search_changed)
+        top_bar.pack_end(self.search_entry, False, False, 0)
+
+        # Notification toast
+        self.toast_label = Gtk.Label(label="")
+        self.toast_label.get_style_context().add_class("subtext")
+        self.toast_label.set_no_show_all(True)
+        main_vbox.pack_start(self.toast_label, False, False, 0)
+
+        # Populate Tabs
+        self.all_rows = []
+        for tab_name, content in DATA.items():
+            scroll = Gtk.ScrolledWindow()
+            scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+            
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            box.set_margin_top(8)
+            box.set_margin_bottom(8)
+            box.set_margin_start(4)
+            box.set_margin_end(4)
+
+            # Flags section if any
+            if "flags" in content:
+                lbl = Gtk.Label(label="ПАРАМЕТРЫ ЗАПУСКА STEAM (КЛИК ДЛЯ КОПИРОВАНИЯ)", xalign=0)
+                lbl.get_style_context().add_class("section-title")
+                box.pack_start(lbl, False, False, 0)
+
+                for flag, desc in content["flags"]:
+                    row = self.create_flag_row(flag, desc)
+                    box.pack_start(row, False, False, 0)
+                    self.all_rows.append((row, (flag + " " + desc).lower()))
+
+            # Keys section
+            if "keys" in content:
+                lbl = Gtk.Label(label="ГОРЯЧИЕ КЛАВИШИ", xalign=0)
+                lbl.get_style_context().add_class("section-title")
+                box.pack_start(lbl, False, False, 0)
+
+                for keys, desc in content["keys"]:
+                    row = self.create_key_row(keys, desc)
+                    box.pack_start(row, False, False, 0)
+                    self.all_rows.append((row, (keys + " " + desc).lower()))
+
+            scroll.add(box)
+            self.stack.add_titled(scroll, tab_name, tab_name)
+
+        main_vbox.pack_start(self.stack, True, True, 0)
+
+        # Footer
+        footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        footer.set_margin_top(4)
+        hint = Gtk.Label(label="Нажмите Esc для закрытия | Кликните «Копировать» для параметров запуска Steam", xalign=0)
+        hint.get_style_context().add_class("subtext")
+        footer.pack_start(hint, True, True, 0)
+
+        close_btn = Gtk.Button(label="Закрыть (Esc)")
+        close_btn.get_style_context().add_class("copy-btn")
+        close_btn.connect("clicked", lambda _: Gtk.main_quit())
+        footer.pack_end(close_btn, False, False, 0)
+
+        main_vbox.pack_end(footer, False, False, 0)
+
+    def create_flag_row(self, flag: str, desc: str):
+        row = Gtk.ListBoxRow()
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        box.set_margin_top(4)
+        box.set_margin_bottom(4)
+
+        flag_lbl = Gtk.Label(label=flag, xalign=0)
+        flag_lbl.get_style_context().add_class("flag-badge")
+        flag_lbl.set_selectable(True)
+        box.pack_start(flag_lbl, False, False, 0)
+
+        desc_lbl = Gtk.Label(label=desc, xalign=0)
+        desc_lbl.set_line_wrap(True)
+        box.pack_start(desc_lbl, True, True, 0)
+
+        btn = Gtk.Button(label="📋 Скопировать")
+        btn.get_style_context().add_class("copy-btn")
+        btn.connect("clicked", lambda _, f=flag, b=btn: self.copy_to_clip(f, b))
+        box.pack_end(btn, False, False, 0)
+
+        row.add(box)
+        return row
+
+    def create_key_row(self, keys: str, desc: str):
+        row = Gtk.ListBoxRow()
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        box.set_margin_top(4)
+        box.set_margin_bottom(4)
+
+        keys_lbl = Gtk.Label(label=keys, xalign=0)
+        keys_lbl.get_style_context().add_class("key-badge")
+        keys_lbl.set_size_request(240, -1)
+        box.pack_start(keys_lbl, False, False, 0)
+
+        desc_lbl = Gtk.Label(label=desc, xalign=0)
+        desc_lbl.set_line_wrap(True)
+        box.pack_start(desc_lbl, True, True, 0)
+
+        row.add(box)
+        return row
+
+    def copy_to_clip(self, text: str, btn: Gtk.Button):
+        self.clipboard.set_text(text, -1)
+        orig_text = btn.get_label()
+        btn.set_label("✓ Скопировано!")
+        GLib.timeout_add(1500, lambda: btn.set_label(orig_text))
+
+    def on_search_changed(self, entry):
+        query = entry.get_text().strip().lower()
+        for row, text in self.all_rows:
+            if not query or query in text:
+                row.set_visible(True)
+            else:
+                row.set_visible(False)
+
+    def on_key_press(self, widget, event):
+        if event.keyval == Gdk.KEY_Escape:
+            Gtk.main_quit()
+            return True
+        if (event.state & Gdk.ModifierType.CONTROL_MASK) and event.keyval in (Gdk.KEY_f, Gdk.KEY_F):
+            self.search_entry.grab_focus()
+            return True
+        return False
+
+
+def main():
+    GLib.set_prgname("hypr-cheatsheet")
+    GLib.set_application_name("Шпаргалка")
+
+    css_provider = Gtk.CssProvider()
+    css_provider.load_from_data(CSS)
+    Gtk.StyleContext.add_provider_for_screen(
+        Gdk.Screen.get_default(),
+        css_provider,
+        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+    )
+
+    win = CheatsheetWindow()
+    win.show_all()
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()

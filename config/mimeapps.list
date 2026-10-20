@@ -1,0 +1,27 @@
+[Default Applications]
+text/html=brave-browser.desktop
+x-scheme-handler/http=brave-browser.desktop
+x-scheme-handler/https=brave-browser.desktop
+x-scheme-handler/about=brave-browser.desktop
+x-scheme-handler/unknown=brave-browser.desktop
+x-scheme-handler/antigravity=antigravity.desktop
+image/png=viewnior.desktop
+image/jpeg=viewnior.desktop
+image/gif=viewnior.desktop
+image/webp=viewnior.desktop
+image/bmp=viewnior.desktop
+image/tiff=viewnior.desktop
+image/svg+xml=viewnior.desktop
+application/x-ms-dos-executable;application/x-wine-extension-msp;application/x-msi;application/x-msdos-program;text/win-bat;=PortProton.desktop
+
+[Added Associations]
+x-scheme-handler/antigravity=antigravity.desktop;
+application/x-bat=dev.zed.Zed.desktop;
+application/x-powershell=dev.zed.Zed.desktop;
+image/png=viewnior.desktop;
+image/jpeg=viewnior.desktop;
+image/gif=viewnior.desktop;
+image/webp=viewnior.desktop;
+image/bmp=viewnior.desktop;
+image/tiff=viewnior.desktop;
+image/svg+xml=viewnior.desktop;

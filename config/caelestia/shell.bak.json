@@ -1,0 +1,26 @@
+{
+    "background": {
+        "wallpaperEnabled": true
+    },
+    "dock": {
+        "autoHide": false,
+        "enabled": true,
+        "pinnedApps": [
+            "firefox.desktop",
+            "kitty.desktop",
+            "thunar.desktop",
+            "spotify.desktop"
+        ],
+        "position": "bottom",
+        "scale": 1
+    },
+    "lock": {
+        "patternConfirmation": true,
+        "patternEnabled": true
+    },
+    "overview": {
+        "defaultTab": "carousel",
+        "scale": 1,
+        "showSpecialWorkspaces": true
+    }
+}

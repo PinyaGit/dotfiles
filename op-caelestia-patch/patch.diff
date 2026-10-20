@@ -1,0 +1,186 @@
+diff --git a/modules/lock/Fetch.qml b/modules/lock/Fetch.qml
+index 8f8ec6d5..fb0e90c5 100644
+--- a/modules/lock/Fetch.qml
++++ b/modules/lock/Fetch.qml
+@@ -36,7 +36,6 @@ StyledClippingRect {
+         visible: root.showGif
+ 
+         source: root.showGif ? root.gifSource : ""
+-        sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
+         playing: root.visible && root.showGif && width > 0 && height > 0
+         paused: false
+         speed: 1
+diff --git a/modules/session/Content.qml b/modules/session/Content.qml
+index fedf6032..fe193100 100644
+--- a/modules/session/Content.qml
++++ b/modules/session/Content.qml
+@@ -52,7 +52,6 @@ Column {
+     AnimatedImage {
+         width: Tokens.sizes.session.button
+         height: Tokens.sizes.session.button
+-        sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
+ 
+         playing: visible
+         asynchronous: true
+diff --git a/plugin/src/Caelestia/Config/userpaths.hpp b/plugin/src/Caelestia/Config/userpaths.hpp
+index 1413c809..2843f84e 100644
+--- a/plugin/src/Caelestia/Config/userpaths.hpp
++++ b/plugin/src/Caelestia/Config/userpaths.hpp
+@@ -71,7 +71,7 @@ private:
+         return u"root:/assets/themes/"_s + m_themeName + u"/"_s + fileName;
+     }
+ 
+-    QString m_themeName = u"Shinchan"_s;
++    QString m_themeName = u"Classic"_s;
+ };
+ 
+ } // namespace caelestia::config
+diff --git a/plugin/src/Caelestia/cutils.cpp b/plugin/src/Caelestia/cutils.cpp
+index 42d7570f..d7a5f788 100644
+--- a/plugin/src/Caelestia/cutils.cpp
++++ b/plugin/src/Caelestia/cutils.cpp
+@@ -9,9 +9,35 @@
+ #include <qloggingcategory.h>
+ #include <qqmlengine.h>
+ #include <qregularexpression.h>
++#include <qcoreapplication.h>
++#include <qtranslator.h>
++#include <qlocale.h>
+ 
+ Q_LOGGING_CATEGORY(lcCUtils, "caelestia.cutils", QtInfoMsg)
+ 
++namespace {
++
++struct I18nLoader {
++    QTranslator* translator = nullptr;
++    I18nLoader() {
++        QLocale loc;
++        if (loc.language() == QLocale::Russian || loc.name().startsWith(QLatin1String("ru"))) {
++            translator = new QTranslator(QCoreApplication::instance());
++            const QString path = QDir::homePath() + QStringLiteral("/.config/quickshell/op-caelestia/translations/caelestia_ru.qm");
++            if (translator->load(path)) {
++                QCoreApplication::installTranslator(translator);
++                qCInfo(lcCUtils) << "Installed Russian translation from" << path;
++            } else {
++                qCWarning(lcCUtils) << "Failed to load translation from" << path;
++            }
++        }
++    }
++};
++
++static I18nLoader s_i18nLoader;
++
++} // namespace
++
+ namespace caelestia {
+ 
+ void CUtils::saveItem(QQuickItem* target, const QUrl& path) {
+diff --git a/scripts/startup-shell.sh b/scripts/startup-shell.sh
+index 7bafbfd4..8ce7e600 100755
+--- a/scripts/startup-shell.sh
++++ b/scripts/startup-shell.sh
+@@ -6,16 +6,17 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+ case "${1:-}" in
+     -k|--kill)
+         echo "Stopping OP-Caelestia Shell..."
+-        killall -9 quickshell 2>/dev/null || true
++        killall -9 qs quickshell 2>/dev/null || true
++        pkill -9 -f "quickshell|qs -c" 2>/dev/null || true
+         exit 0
+         ;;
+     -r|--restart)
+         echo "Restarting OP-Caelestia Shell..."
+-        killall -9 quickshell 2>/dev/null || true
++        killall -9 qs quickshell 2>/dev/null || true
++        pkill -9 -f "quickshell|qs -c" 2>/dev/null || true
+         sleep 0.5
+         shift || true
+         ;;
+ esac
+ 
+-touch /tmp/caelestia_boot_lock
+ exec "$SCRIPT_DIR/run-local-shell.sh" "$@"
+diff --git a/services/Time.qml b/services/Time.qml
+index 0db520d0..32fb82cd 100644
+--- a/services/Time.qml
++++ b/services/Time.qml
+@@ -18,6 +18,9 @@ Singleton {
+     readonly property string amPmStr: timeComponents[2] ?? ""
+ 
+     function format(fmt: string): string {
++        if (fmt.includes("d") || fmt.includes("M")) {
++            return clock.date.toLocaleDateString(Qt.locale(), fmt);
++        }
+         return Qt.formatDateTime(clock.date, fmt);
+     }
+ 
+diff --git a/services/Weather.qml b/services/Weather.qml
+index 8051020a..c110be85 100644
+--- a/services/Weather.qml
++++ b/services/Weather.qml
+@@ -295,36 +295,36 @@ Singleton {
+ 
+     function getWeatherCondition(code: string): string {
+         const conditions = {
+-            "0": "Clear",
+-            "1": "Clear",
+-            "2": "Partly cloudy",
+-            "3": "Overcast",
+-            "45": "Fog",
+-            "48": "Fog",
+-            "51": "Drizzle",
+-            "53": "Drizzle",
+-            "55": "Drizzle",
+-            "56": "Freezing drizzle",
+-            "57": "Freezing drizzle",
+-            "61": "Light rain",
+-            "63": "Rain",
+-            "65": "Heavy rain",
+-            "66": "Light rain",
+-            "67": "Heavy rain",
+-            "71": "Light snow",
+-            "73": "Snow",
+-            "75": "Heavy snow",
+-            "77": "Snow",
+-            "80": "Light rain",
+-            "81": "Rain",
+-            "82": "Heavy rain",
+-            "85": "Light snow showers",
+-            "86": "Heavy snow showers",
+-            "95": "Thunderstorm",
+-            "96": "Thunderstorm with hail",
+-            "99": "Thunderstorm with hail"
++            "0": "Ясно",
++            "1": "Преимущественно ясно",
++            "2": "Переменная облачность",
++            "3": "Пасмурно",
++            "45": "Туман",
++            "48": "Туман",
++            "51": "Морось",
++            "53": "Морось",
++            "55": "Умеренная морось",
++            "56": "Ледяная морось",
++            "57": "Сильная ледяная морось",
++            "61": "Небольшой дождь",
++            "63": "Дождь",
++            "65": "Сильный дождь",
++            "66": "Ледяной дождь",
++            "67": "Сильный ледяной дождь",
++            "71": "Небольшой снег",
++            "73": "Снег",
++            "75": "Сильный снегопад",
++            "77": "Снежная крупа",
++            "80": "Небольшой ливень",
++            "81": "Ливень",
++            "82": "Сильный ливень",
++            "85": "Небольшой снегопад",
++            "86": "Сильный снегопад",
++            "95": "Гроза",
++            "96": "Гроза с градом",
++            "99": "Сильная гроза с градом"
+         };
+-        return conditions[code] || "Unknown";
++        return conditions[code] || "Неизвестно";
+     }
+ 
+     onLocChanged: fetchWeatherData()

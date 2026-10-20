@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+TARGET_DIR="$HOME/.config/quickshell/op-caelestia"
+if [[ "${1:-}" == "-k" || "${1:-}" == "--kill" ]]; then
+    killall -9 qs quickshell 2>/dev/null || true
+    pkill -9 -f "quickshell|qs -c" 2>/dev/null || true
+    exit 0
+elif [[ "${1:-}" == "-r" || "${1:-}" == "--restart" ]]; then
+    killall -9 qs quickshell 2>/dev/null || true
+    pkill -9 -f "quickshell|qs -c" 2>/dev/null || true
+    sleep 0.5
+    exec "$TARGET_DIR/scripts/startup-shell.sh" -d -n
+fi
+exec "$TARGET_DIR/scripts/startup-shell.sh" -d -n "$@"

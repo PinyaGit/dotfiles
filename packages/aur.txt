@@ -1,0 +1,14 @@
+# Gaming
+protonup-qt-bin
+
+# SDDM & Lock
+caelestia-sddm-locklike-git
+
+# Caelestia Ecosystem
+wallpick-git
+caelestia-equalizer
+caelestia-gif
+caelestia-rgb-sync
+
+# Browser (if not installed)
+brave-bin

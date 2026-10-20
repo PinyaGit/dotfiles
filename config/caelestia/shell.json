@@ -1,0 +1,28 @@
+{
+    "background": {
+        "wallpaperEnabled": true
+    },
+    "dock": {
+        "dragThreshold": 50,
+        "enabled": true,
+        "maxSlots": 7,
+        "pinnedApps": [
+            "brave-browser.desktop",
+            "kitty.desktop",
+            "thunar.desktop",
+            "spotify.desktop"
+        ],
+        "showOnHover": true
+    },
+    "lock": {
+        "enablePattern": false,
+        "showGif": true,
+        "useWallpaper": false
+    },
+    "paths": {
+        "themeName": "Classic"
+    },
+    "services": {
+        "weatherLocation": "Voronezh"
+    }
+}

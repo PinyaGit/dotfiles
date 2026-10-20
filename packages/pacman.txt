@@ -1,0 +1,41 @@
+# Hyprland & Wayland Core
+hyprland
+xdg-desktop-portal-hyprland
+xdg-user-dirs
+foot
+kitty
+thunar
+
+# Shell & UI
+quickshell
+qt6-5compat
+qt6-declarative
+cmake
+ninja
+gcc
+python
+python-gobject
+gtk3
+yad
+
+# File Manager & Media Preview
+tumbler
+ffmpegthumbnailer
+poppler-glib
+webp-pixbuf-loader
+thunar-archive-plugin
+viewnior
+gvfs
+gvfs-smb
+gvfs-wsdd
+
+# Gaming & Performance
+mangohud
+lib32-mangohud
+goverlay
+gamemode
+lib32-gamemode
+
+# System & Maintenance
+pacman-contrib
+cronie
