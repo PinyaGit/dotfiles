@@ -56,6 +56,24 @@ index 76738447..d1c26e77 100644
                      return;
                  const screenState = ShellState.forActive();
                  screenState[drawer] = !screenState[drawer];
+diff --git a/modules/dashboard/media/LyricList.qml b/modules/dashboard/media/LyricList.qml
+index c7fa7d25..017862f4 100644
+--- a/modules/dashboard/media/LyricList.qml
++++ b/modules/dashboard/media/LyricList.qml
+@@ -14,10 +14,11 @@ import qs.services
+ Item {
+     id: root
+ 
+-    // Funny binding hack to make lyrics update
++    // Only load lyrics for Spotify to prevent crashes on web/browser players
+     readonly property var _: {
+         const p = Players.active;
+-        if (p)
++        const id = p ? Players.getIdentity(p).toLowerCase() : "";
++        if (p && id.includes("spotify"))
+             Lyrics.setTrack(p.trackArtist, p.trackTitle, p.trackAlbum, p.length);
+         else
+             Lyrics.clearTrack();
 diff --git a/modules/drawers/Panels.qml b/modules/drawers/Panels.qml
 index bebcab92..37f9cb20 100644
 --- a/modules/drawers/Panels.qml
@@ -270,6 +288,28 @@ index 7bafbfd4..8ce7e600 100755
  
 -touch /tmp/caelestia_boot_lock
  exec "$SCRIPT_DIR/run-local-shell.sh" "$@"
+diff --git a/services/Players.qml b/services/Players.qml
+index 893c9554..af3265bd 100644
+--- a/services/Players.qml
++++ b/services/Players.qml
+@@ -28,16 +28,7 @@ Singleton {
+     function getArtUrl(player: MprisPlayer): string {
+         if (!player)
+             return "";
+-        if (player.trackArtUrl)
+-            return player.trackArtUrl;
+-
+-        const url = player.metadata["xesam:url"] ?? "";
+-        if (url.startsWith("https://www.youtube.com/watch")) {
+-            // Fallback for youtube
+-            const id = url.match(/[?&]v=([\w-]{11})/)?.[1];
+-            return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
+-        }
+-        return "";
++        return player.trackArtUrl || "";
+     }
+ 
+     // Quickshell only emits postTrackChanged when trackid/url/title change, so late
 diff --git a/services/Time.qml b/services/Time.qml
 index 0db520d0..32fb82cd 100644
 --- a/services/Time.qml
